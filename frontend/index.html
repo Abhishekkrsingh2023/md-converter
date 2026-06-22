@@ -7,7 +7,7 @@
   <title>md → export</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet" />
   <style>
     *,
@@ -18,19 +18,38 @@
       padding: 0;
     }
 
+    * {
+      scrollbar-width: none;
+    }
+
+    *::-webkit-scrollbar {
+      display: none;
+    }
+
     :root {
-      --bg: #0D0F17;
-      --surface: #13161F;
-      --border: #1E2130;
-      --border-hi: #2A2E45;
-      --accent: #6C63FF;
-      --accent-dim: #3D3880;
-      --accent-glow: rgba(108, 99, 255, 0.25);
-      --text: #E4E6F0;
-      --muted: #5A5F7A;
+      --bg: #080A12;
+      --accent: #7C6FFF;
+      --accent-soft: #5B52CC;
+      --accent-glow: rgba(124, 111, 255, 0.22);
+      --accent-glow2: rgba(124, 111, 255, 0.10);
+
+      /* Glass layers */
+      --glass-bg: rgba(255, 255, 255, 0.045);
+      --glass-bg-hi: rgba(255, 255, 255, 0.07);
+      --glass-border: rgba(255, 255, 255, 0.10);
+      --glass-border-hi: rgba(255, 255, 255, 0.18);
+      --glass-inset: rgba(255, 255, 255, 0.13);
+      /* top-edge gloss line */
+
+      --text: #E8EAF4;
+      --text-dim: #9CA3BF;
+      --muted: #4E546E;
       --success: #4ADE80;
       --error: #F87171;
+
+      --radius-card: 20px;
       --radius: 10px;
+      --blur: blur(28px) saturate(160%);
       --mono: 'JetBrains Mono', monospace;
       --sans: 'Inter', sans-serif;
     }
@@ -46,128 +65,213 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    /* ── Ambient background orbs ── */
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      width: 560px;
+      height: 560px;
+      background: radial-gradient(circle, rgba(100, 88, 255, 0.18) 0%, transparent 70%);
+      top: -180px;
+      left: 50%;
+      transform: translateX(-50%);
+      filter: blur(10px);
+    }
+
+    body::after {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(80, 60, 200, 0.11) 0%, transparent 70%);
+      bottom: -100px;
+      right: 20%;
+      filter: blur(8px);
+    }
+
     /* ── Layout ── */
     .shell {
+      position: relative;
+      z-index: 1;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 48px 24px 80px;
+      padding: 52px 24px 88px;
     }
 
+    /* ── Header ── */
     header {
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 36px;
     }
 
     .logo {
       font-family: var(--mono);
-      font-size: 22px;
+      font-size: 21px;
       font-weight: 500;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.3px;
       color: var(--text);
     }
 
     .logo span {
       color: var(--accent);
+      text-shadow: 0 0 18px var(--accent-glow);
     }
 
     .tagline {
-      margin-top: 6px;
-      font-size: 13px;
-      color: var(--muted);
-      letter-spacing: 0.02em;
+      margin-top: 7px;
+      font-size: 12.5px;
+      font-weight: 300;
+      color: var(--text-dim);
+      letter-spacing: 0.03em;
     }
 
-    /* ── Card ── */
+    /* ── Main card — frosted glass ── */
     .card {
       width: 100%;
-      max-width: 740px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+      max-width: 720px;
+      position: relative;
+
+      /* Glass base */
+      background: var(--glass-bg);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+
+      /* Layered border: outer edge + inset top gloss line */
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
       overflow: hidden;
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 24px 64px rgba(0, 0, 0, 0.5);
+
+      /* Shadows: soft outer glow + depth shadow */
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 1px 0 0 var(--glass-inset) inset,
+        /* ← macOS top-gloss line */
+        0 2px 0 0 rgba(0, 0, 0, 0.25) inset,
+        0 32px 80px rgba(0, 0, 0, 0.55),
+        0 0 60px rgba(124, 111, 255, 0.07);
     }
 
-    /* ── Tabs ── */
+    /* Very subtle noise grain for tactile glass feel */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 160px 160px;
+      opacity: 0.022;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Tab bar ── */
     .tab-bar {
+      position: relative;
+      z-index: 1;
       display: flex;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg);
+      border-bottom: 1px solid var(--glass-border);
+      background: rgba(0, 0, 0, 0.18);
     }
 
     .tab-btn {
       flex: 1;
-      padding: 13px 0;
+      padding: 14px 0;
       font-family: var(--sans);
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 500;
       color: var(--muted);
       background: transparent;
       border: none;
       cursor: pointer;
-      transition: color 0.18s, background 0.18s;
-      letter-spacing: 0.03em;
+      transition: color 0.2s, background 0.2s;
+      letter-spacing: 0.04em;
+      position: relative;
     }
 
     .tab-btn.active {
       color: var(--text);
-      background: var(--surface);
-      border-bottom: 2px solid var(--accent);
-      margin-bottom: -1px;
+      background: rgba(124, 111, 255, 0.06);
+    }
+
+    /* Active tab indicator — slim glowing line */
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 20%;
+      right: 20%;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow), 0 0 4px var(--accent);
     }
 
     .tab-btn:not(.active):hover {
-      color: var(--text);
+      color: var(--text-dim);
     }
 
     /* ── Tab panels ── */
     .tab-panel {
       display: none;
       padding: 24px;
+      position: relative;
+      z-index: 1;
     }
 
     .tab-panel.active {
       display: block;
     }
 
-    /* ── Textarea ── */
+    /* ── Textarea / Editor ── */
     .editor-wrap {
       position: relative;
-      border: 1px solid var(--border);
+      border: 1px solid var(--glass-border);
       border-radius: var(--radius);
       overflow: hidden;
-      transition: border-color 0.18s, box-shadow 0.18s;
+      background: rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(4px);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
     }
 
     .editor-wrap:focus-within {
-      border-color: var(--accent-dim);
-      box-shadow: 0 0 0 3px var(--accent-glow);
+      border-color: rgba(124, 111, 255, 0.45);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.06) inset,
+        0 0 0 3px rgba(124, 111, 255, 0.14),
+        0 0 20px rgba(124, 111, 255, 0.08);
     }
 
     .editor-label {
       position: absolute;
-      top: 10px;
-      right: 12px;
+      top: 11px;
+      right: 13px;
       font-family: var(--mono);
-      font-size: 10px;
+      font-size: 9.5px;
       color: var(--muted);
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       pointer-events: none;
+      opacity: 0.7;
     }
 
     textarea {
       display: block;
       width: 100%;
-      min-height: 320px;
+      min-height: 300px;
       padding: 16px;
-      background: rgba(0, 0, 0, 0.3);
+      background: transparent;
       color: var(--text);
       font-family: var(--mono);
       font-size: 13px;
-      line-height: 1.7;
+      line-height: 1.75;
       border: none;
       outline: none;
       resize: vertical;
@@ -180,41 +284,49 @@
 
     /* ── Drop zone ── */
     .dropzone {
-      border: 1px dashed var(--border-hi);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
       border-radius: var(--radius);
       padding: 52px 24px;
       text-align: center;
       cursor: pointer;
-      transition: border-color 0.18s, background 0.18s;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      background: rgba(0, 0, 0, 0.18);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
       position: relative;
+    }
+
+    .dropzone:hover {
+      border-color: rgba(124, 111, 255, 0.35);
+      background: rgba(124, 111, 255, 0.04);
     }
 
     .dropzone.over {
       border-color: var(--accent);
-      background: var(--accent-glow);
+      background: rgba(124, 111, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(124, 111, 255, 0.12), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
     }
 
     .dropzone.has-file {
-      border-color: var(--success);
-      background: rgba(74, 222, 128, 0.05);
+      border-color: rgba(74, 222, 128, 0.4);
+      background: rgba(74, 222, 128, 0.04);
     }
 
     .drop-icon {
-      font-size: 32px;
+      font-size: 28px;
       margin-bottom: 12px;
       display: block;
-      opacity: 0.6;
+      opacity: 0.5;
     }
 
     .drop-title {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 500;
       color: var(--text);
     }
 
     .drop-sub {
       margin-top: 4px;
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--muted);
     }
 
@@ -226,7 +338,7 @@
       display: none;
       margin-top: 10px;
       font-family: var(--mono);
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--success);
     }
 
@@ -234,37 +346,40 @@
       display: block;
     }
 
-    /* ── Format toggle ── */
+    /* ── Format row ── */
     .format-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 20px;
+      margin-top: 18px;
     }
 
     .format-label {
-      font-size: 12px;
+      font-size: 11px;
+      font-weight: 500;
       color: var(--muted);
-      letter-spacing: 0.04em;
+      letter-spacing: 0.07em;
       text-transform: uppercase;
     }
 
+    /* Pill toggle — glass style */
     .format-toggle {
       display: flex;
-      background: var(--bg);
-      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
       border-radius: 999px;
       padding: 3px;
-      gap: 3px;
+      gap: 2px;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
     }
 
     .fmt-btn {
-      padding: 6px 20px;
+      padding: 5px 22px;
       border-radius: 999px;
       font-family: var(--mono);
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 500;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       cursor: pointer;
       border: none;
       background: transparent;
@@ -273,44 +388,77 @@
     }
 
     .fmt-btn.selected {
-      background: var(--accent);
+      background: linear-gradient(160deg, rgba(124, 111, 255, 0.95) 0%, rgba(90, 75, 210, 0.95) 100%);
       color: #fff;
-      box-shadow: 0 0 14px var(--accent-glow), 0 2px 6px rgba(108, 99, 255, 0.4);
+      /* Gloss sheen inside button */
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.28) inset,
+        0 -1px 0 rgba(0, 0, 0, 0.2) inset,
+        0 0 14px rgba(124, 111, 255, 0.4),
+        0 2px 8px rgba(80, 60, 200, 0.35);
     }
 
     .fmt-btn:not(.selected):hover {
-      color: var(--text);
+      color: var(--text-dim);
     }
 
     /* ── Convert button ── */
     .convert-btn {
-      margin-top: 20px;
+      margin-top: 18px;
       width: 100%;
       padding: 14px;
-      background: var(--accent);
+      background: linear-gradient(160deg, #7C6FFF 0%, #5A4BD2 100%);
       color: #fff;
       font-family: var(--sans);
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 600;
       border: none;
       border-radius: var(--radius);
       cursor: pointer;
-      letter-spacing: 0.02em;
-      transition: opacity 0.18s, box-shadow 0.18s, transform 0.1s;
+      letter-spacing: 0.025em;
       position: relative;
       overflow: hidden;
+      transition: opacity 0.2s, box-shadow 0.2s, transform 0.12s;
+
+      /* Glass gloss on the button */
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.22) inset,
+        0 -1px 0 rgba(0, 0, 0, 0.2) inset,
+        0 4px 20px rgba(124, 111, 255, 0.3),
+        0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Subtle top-gloss sweep */
+    .convert-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 48%;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.12), transparent);
+      border-radius: var(--radius) var(--radius) 0 0;
+      pointer-events: none;
     }
 
     .convert-btn:not(:disabled):hover {
-      box-shadow: 0 0 24px var(--accent-glow), 0 4px 16px rgba(108, 99, 255, 0.35);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.22) inset,
+        0 -1px 0 rgba(0, 0, 0, 0.2) inset,
+        0 6px 28px rgba(124, 111, 255, 0.45),
+        0 1px 4px rgba(0, 0, 0, 0.3);
     }
 
     .convert-btn:not(:disabled):active {
       transform: scale(0.99);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.12) inset,
+        0 -1px 0 rgba(0, 0, 0, 0.2) inset,
+        0 2px 10px rgba(124, 111, 255, 0.3);
     }
 
     .convert-btn:disabled {
-      opacity: 0.4;
+      opacity: 0.35;
       cursor: not-allowed;
     }
 
@@ -319,16 +467,17 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      position: relative;
+      z-index: 1;
     }
 
-    /* spinner */
     .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
       border-top-color: #fff;
       border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      animation: spin 0.65s linear infinite;
       display: none;
     }
 
@@ -352,12 +501,12 @@
 
     /* ── Status bar ── */
     .status {
-      margin-top: 14px;
-      min-height: 22px;
-      font-size: 12px;
+      margin-top: 12px;
+      min-height: 20px;
+      font-size: 11.5px;
       text-align: center;
       border-radius: 6px;
-      padding: 4px 10px;
+      padding: 3px 10px;
       transition: opacity 0.3s;
       opacity: 0;
     }
@@ -374,28 +523,42 @@
       color: var(--error);
     }
 
+    /* ── Divider between sections inside panel ── */
+    .panel-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+      margin: 20px 0;
+    }
+
     /* ── Footer ── */
     footer {
-      margin-top: 32px;
+      margin-top: 28px;
       font-size: 11px;
+      font-weight: 400;
       color: var(--muted);
       text-align: center;
       letter-spacing: 0.04em;
+      opacity: 0.7;
     }
 
     footer a {
       color: var(--accent);
       text-decoration: none;
+      opacity: 0.85;
+    }
+
+    footer a:hover {
+      opacity: 1;
     }
 
     /* ── Responsive ── */
     @media (max-width: 520px) {
       .shell {
-        padding: 32px 16px 60px;
+        padding: 32px 14px 64px;
       }
 
       .card {
-        border-radius: 12px;
+        border-radius: 16px;
       }
 
       .tab-panel {
@@ -424,7 +587,7 @@
 <body>
   <div class="shell">
     <header>
-      <div class="logo">md <span>→</span> export</div>
+      <div class="logo" style="font-size: 24px;">md <span>→</span> export</div>
       <div class="tagline">Paste or upload Markdown · Convert to PDF or DOCX</div>
     </header>
 
@@ -442,6 +605,7 @@
           <textarea id="md-input"
             placeholder="# Hello World&#10;&#10;Write your **Markdown** here. Math: $E = mc^2$&#10;&#10;- item one&#10;- item two"></textarea>
         </div>
+
         <div class="format-row">
           <span class="format-label">Output format</span>
           <div class="format-toggle" id="toggle-text" role="group" aria-label="Output format">
@@ -449,6 +613,7 @@
             <button class="fmt-btn" data-fmt="docx">DOCX</button>
           </div>
         </div>
+
         <button class="convert-btn" id="btn-text">
           <span class="btn-inner">
             <span class="spinner"></span>
@@ -475,6 +640,7 @@
             <button class="fmt-btn" data-fmt="docx">DOCX</button>
           </div>
         </div>
+
         <button class="convert-btn" id="btn-file" disabled>
           <span class="btn-inner">
             <span class="spinner"></span>
@@ -485,7 +651,7 @@
       </div>
     </div>
 
-    <footer>
+    <footer style="font-size: medium;">
       © 2026 Abhishek · md → export &nbsp;·&nbsp; Powered by <a href="https://pandoc.org" target="_blank"
         rel="noopener">Pandoc</a> + XeLaTeX
     </footer>
@@ -542,7 +708,6 @@
 
     dropzone.addEventListener("click", () => fileInput.click());
     dropzone.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") fileInput.click(); });
-
     dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("over"); });
     dropzone.addEventListener("dragleave", () => dropzone.classList.remove("over"));
     dropzone.addEventListener("drop", e => {
