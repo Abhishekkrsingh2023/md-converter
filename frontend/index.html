@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>md → export</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0D0F17;
+      --surface: #13161F;
+      --border: #1E2130;
+      --border-hi: #2A2E45;
+      --accent: #6C63FF;
+      --accent-dim: #3D3880;
+      --accent-glow: rgba(108, 99, 255, 0.25);
+      --text: #E4E6F0;
+      --muted: #5A5F7A;
+      --success: #4ADE80;
+      --error: #F87171;
+      --radius: 10px;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Inter', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    .shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px 80px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .tagline {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Card ── */
+    .card {
+      width: 100%;
+      max-width: 740px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 24px 64px rgba(0, 0, 0, 0.5);
+    }
+
+    /* ── Tabs ── */
+    .tab-bar {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 13px 0;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: color 0.18s, background 0.18s;
+      letter-spacing: 0.03em;
+    }
+
+    .tab-btn.active {
+      color: var(--text);
+      background: var(--surface);
+      border-bottom: 2px solid var(--accent);
+      margin-bottom: -1px;
+    }
+
+    .tab-btn:not(.active):hover {
+      color: var(--text);
+    }
+
+    /* ── Tab panels ── */
+    .tab-panel {
+      display: none;
+      padding: 24px;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* ── Textarea ── */
+    .editor-wrap {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+
+    .editor-wrap:focus-within {
+      border-color: var(--accent-dim);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .editor-label {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 320px;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.7;
+      border: none;
+      outline: none;
+      resize: vertical;
+      tab-size: 2;
+    }
+
+    textarea::placeholder {
+      color: var(--muted);
+    }
+
+    /* ── Drop zone ── */
+    .dropzone {
+      border: 1px dashed var(--border-hi);
+      border-radius: var(--radius);
+      padding: 52px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.18s, background 0.18s;
+      position: relative;
+    }
+
+    .dropzone.over {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .dropzone.has-file {
+      border-color: var(--success);
+      background: rgba(74, 222, 128, 0.05);
+    }
+
+    .drop-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      display: block;
+      opacity: 0.6;
+    }
+
+    .drop-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .drop-sub {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .file-name {
+      display: none;
+      margin-top: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--success);
+    }
+
+    .file-name.visible {
+      display: block;
+    }
+
+    /* ── Format toggle ── */
+    .format-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .format-label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .format-toggle {
+      display: flex;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .fmt-btn {
+      padding: 6px 20px;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+
+    .fmt-btn.selected {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 14px var(--accent-glow), 0 2px 6px rgba(108, 99, 255, 0.4);
+    }
+
+    .fmt-btn:not(.selected):hover {
+      color: var(--text);
+    }
+
+    /* ── Convert button ── */
+    .convert-btn {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: opacity 0.18s, box-shadow 0.18s, transform 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .convert-btn:not(:disabled):hover {
+      box-shadow: 0 0 24px var(--accent-glow), 0 4px 16px rgba(108, 99, 255, 0.35);
+    }
+
+    .convert-btn:not(:disabled):active {
+      transform: scale(0.99);
+    }
+
+    .convert-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .convert-btn .btn-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* spinner */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    .convert-btn.loading .spinner {
+      display: block;
+    }
+
+    .convert-btn.loading .btn-text::after {
+      content: "Converting…";
+    }
+
+    .convert-btn:not(.loading) .btn-text::after {
+      content: "Convert & Download";
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── Status bar ── */
+    .status {
+      margin-top: 14px;
+      min-height: 22px;
+      font-size: 12px;
+      text-align: center;
+      border-radius: 6px;
+      padding: 4px 10px;
+      transition: opacity 0.3s;
+      opacity: 0;
+    }
+
+    .status.show {
+      opacity: 1;
+    }
+
+    .status.ok {
+      color: var(--success);
+    }
+
+    .status.err {
+      color: var(--error);
+    }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 32px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 520px) {
+      .shell {
+        padding: 32px 16px 60px;
+      }
+
+      .card {
+        border-radius: 12px;
+      }
+
+      .tab-panel {
+        padding: 18px;
+      }
+
+      .format-row {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .spinner {
+        animation: none;
+      }
+
+      * {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <header>
+      <div class="logo">md <span>→</span> export</div>
+      <div class="tagline">Paste or upload Markdown · Convert to PDF or DOCX</div>
+    </header>
+
+    <div class="card">
+      <!-- Tabs -->
+      <div class="tab-bar" role="tablist">
+        <button class="tab-btn active" role="tab" aria-selected="true" data-tab="text">Paste text</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="file">Upload file</button>
+      </div>
+
+      <!-- Paste panel -->
+      <div class="tab-panel active" id="panel-text">
+        <div class="editor-wrap">
+          <span class="editor-label">markdown</span>
+          <textarea id="md-input"
+            placeholder="# Hello World&#10;&#10;Write your **Markdown** here. Math: $E = mc^2$&#10;&#10;- item one&#10;- item two"></textarea>
+        </div>
+        <div class="format-row">
+          <span class="format-label">Output format</span>
+          <div class="format-toggle" id="toggle-text" role="group" aria-label="Output format">
+            <button class="fmt-btn selected" data-fmt="pdf">PDF</button>
+            <button class="fmt-btn" data-fmt="docx">DOCX</button>
+          </div>
+        </div>
+        <button class="convert-btn" id="btn-text">
+          <span class="btn-inner">
+            <span class="spinner"></span>
+            <span class="btn-text"></span>
+          </span>
+        </button>
+        <div class="status" id="status-text"></div>
+      </div>
+
+      <!-- File upload panel -->
+      <div class="tab-panel" id="panel-file">
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload markdown file">
+          <span class="drop-icon">📄</span>
+          <div class="drop-title">Drop a .md file here</div>
+          <div class="drop-sub">or click to browse</div>
+          <div class="file-name" id="file-name"></div>
+        </div>
+        <input type="file" id="file-input" class="file-input" accept=".md,.markdown,text/markdown,text/plain" />
+
+        <div class="format-row">
+          <span class="format-label">Output format</span>
+          <div class="format-toggle" id="toggle-file" role="group" aria-label="Output format">
+            <button class="fmt-btn selected" data-fmt="pdf">PDF</button>
+            <button class="fmt-btn" data-fmt="docx">DOCX</button>
+          </div>
+        </div>
+        <button class="convert-btn" id="btn-file" disabled>
+          <span class="btn-inner">
+            <span class="spinner"></span>
+            <span class="btn-text"></span>
+          </span>
+        </button>
+        <div class="status" id="status-file"></div>
+      </div>
+    </div>
+
+    <footer>
+      © 2025 Abhishek · md → export &nbsp;·&nbsp; Powered by <a href="https://pandoc.org" target="_blank"
+        rel="noopener">Pandoc</a> + XeLaTeX
+    </footer>
+  </div>
+
+  <script>
+    // ── Config ──────────────────────────────────────────────────────────────
+    const API_BASE = "";   // Empty = same origin. Set to "http://localhost:8000" for dev.
+
+    // ── Tab switching ────────────────────────────────────────────────────────
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => {
+          b.classList.remove("active");
+          b.setAttribute("aria-selected", "false");
+        });
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        btn.setAttribute("aria-selected", "true");
+        document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    // ── Format toggles ───────────────────────────────────────────────────────
+    const selectedFmt = { text: "pdf", file: "pdf" };
+
+    document.querySelectorAll(".format-toggle").forEach(toggle => {
+      const group = toggle.id.replace("toggle-", "");
+      toggle.querySelectorAll(".fmt-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          toggle.querySelectorAll(".fmt-btn").forEach(b => b.classList.remove("selected"));
+          btn.classList.add("selected");
+          selectedFmt[group] = btn.dataset.fmt;
+        });
+      });
+    });
+
+    // ── Drop zone ────────────────────────────────────────────────────────────
+    const dropzone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("file-input");
+    const fileName = document.getElementById("file-name");
+    const btnFile = document.getElementById("btn-file");
+    let uploadedFile = null;
+
+    function setFile(file) {
+      if (!file) return;
+      uploadedFile = file;
+      fileName.textContent = "✓  " + file.name;
+      fileName.classList.add("visible");
+      dropzone.classList.add("has-file");
+      dropzone.querySelector(".drop-title").textContent = "File ready";
+      btnFile.disabled = false;
+    }
+
+    dropzone.addEventListener("click", () => fileInput.click());
+    dropzone.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") fileInput.click(); });
+
+    dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("over"); });
+    dropzone.addEventListener("dragleave", () => dropzone.classList.remove("over"));
+    dropzone.addEventListener("drop", e => {
+      e.preventDefault();
+      dropzone.classList.remove("over");
+      setFile(e.dataTransfer.files[0]);
+    });
+
+    fileInput.addEventListener("change", () => setFile(fileInput.files[0]));
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function setLoading(btn, on) {
+      btn.classList.toggle("loading", on);
+      btn.disabled = on;
+    }
+
+    function showStatus(el, msg, kind) {
+      el.textContent = msg;
+      el.className = "status show " + kind;
+      if (kind === "ok") setTimeout(() => el.classList.remove("show"), 3500);
+    }
+
+    async function downloadBlob(response, fmt) {
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "output." + fmt;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }
+
+    // ── Convert: paste text ──────────────────────────────────────────────────
+    document.getElementById("btn-text").addEventListener("click", async () => {
+      const content = document.getElementById("md-input").value.trim();
+      const status = document.getElementById("status-text");
+      const btn = document.getElementById("btn-text");
+      const fmt = selectedFmt.text;
+
+      if (!content) { showStatus(status, "Paste some Markdown first.", "err"); return; }
+
+      setLoading(btn, true);
+      showStatus(status, "", "");
+
+      try {
+        const res = await fetch(`${API_BASE}/convert_text?type=${fmt}`, {
+          method: "POST",
+          body: content,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: "Server error" }));
+          throw new Error(err.detail || "Conversion failed");
+        }
+
+        await downloadBlob(res, fmt);
+        showStatus(status, `✓ Downloaded output.${fmt}`, "ok");
+      } catch (e) {
+        showStatus(status, "✗ " + e.message, "err");
+      } finally {
+        setLoading(btn, false);
+      }
+    });
+
+    // ── Convert: file upload ─────────────────────────────────────────────────
+    document.getElementById("btn-file").addEventListener("click", async () => {
+      const status = document.getElementById("status-file");
+      const btn = document.getElementById("btn-file");
+      const fmt = selectedFmt.file;
+
+      if (!uploadedFile) { showStatus(status, "Upload a .md file first.", "err"); return; }
+
+      setLoading(btn, true);
+      showStatus(status, "", "");
+
+      const form = new FormData();
+      form.append("file", uploadedFile);
+
+      try {
+        const res = await fetch(`${API_BASE}/convert?type=${fmt}`, {
+          method: "POST",
+          body: form,
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: "Server error" }));
+          throw new Error(err.detail || "Conversion failed");
+        }
+
+        await downloadBlob(res, fmt);
+        showStatus(status, `✓ Downloaded output.${fmt}`, "ok");
+      } catch (e) {
+        showStatus(status, "✗ " + e.message, "err");
+      } finally {
+        setLoading(btn, false);
+      }
+    });
+  </script>
+</body>
+
+</html>

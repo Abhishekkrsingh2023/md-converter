@@ -1,0 +1,22 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: markdown-converter:latest
+    container_name: markdown-converter
+
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+
+    # resourece limits for the backend service
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
