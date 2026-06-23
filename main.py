@@ -17,6 +17,7 @@ PANDOC_ARGS = [
     "-V", "geometry:margin=2.5cm",
     "-V", "fontsize=12pt",
     "--toc",
+    "--lua-filter=fix_math.lua"
 ]
 
 def _get_input_output_paths(output_format: str = "pdf"):
@@ -39,15 +40,26 @@ async def convert(request: Request, type: str = "pdf", background_tasks: Backgro
 
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(content)
+    try:
+        pypandoc.convert_file(
+            md_path,
+            output_format,
+            outputfile=output_path,
+            extra_args=PANDOC_ARGS,
+        )
+        background_tasks.add_task(os.remove, md_path)
+        background_tasks.add_task(os.remove, output_path)
 
-    pypandoc.convert_file(
-        md_path,
-        output_format,
-        outputfile=output_path,
-        extra_args=PANDOC_ARGS,
-    )
-    background_tasks.add_task(os.remove, md_path)
-    background_tasks.add_task(os.remove, output_path)
+    except RuntimeError as e:
+        print(f"Conversion error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
+    
+    finally:
+        if os.path.exists(md_path):
+            os.remove(md_path)
+        if os.path.exists(output_path):
+            os.remove(output_path)
+    
 
     return FileResponse(
         output_path,
@@ -64,15 +76,23 @@ async def convert_md_to_pdf(file: UploadFile = File(...), type: str = "pdf", bac
 
     with open(md_path, "wb") as f:
         f.write(content)
-
-    pypandoc.convert_file(
-        md_path,
-        output_format,
-        outputfile=output_path,
-        extra_args=PANDOC_ARGS,
-    )
-    background_tasks.add_task(os.remove, md_path)
-    background_tasks.add_task(os.remove, output_path)
+    try:
+        pypandoc.convert_file(
+            md_path,
+            output_format,
+            outputfile=output_path,
+            extra_args=PANDOC_ARGS,
+        )
+        background_tasks.add_task(os.remove, md_path)
+        background_tasks.add_task(os.remove, output_path)
+    except RuntimeError as e:
+        print(f"Conversion error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Conversion failed.")
+    finally:
+        if os.path.exists(md_path):
+            os.remove(md_path)
+        if os.path.exists(output_path):
+            os.remove(output_path)
 
     return FileResponse(
         output_path,
