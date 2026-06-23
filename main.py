@@ -2,103 +2,82 @@ import os
 import uuid
 import pypandoc
 
-from fastapi.staticfiles import StaticFiles
-from fastapi import (
-    FastAPI, UploadFile, File, Request,HTTPException,
-    BackgroundTasks
-)
+from fastapi import FastAPI, UploadFile, File, Request, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
-
 PANDOC_ARGS = [
+    "--standalone",
     "--pdf-engine=xelatex",
+    "--toc",
     "-V", "geometry:margin=2.5cm",
     "-V", "fontsize=12pt",
-    "--toc",
-    "--lua-filter=fix_math.lua"
+    "--lua-filter=fix_math.lua",
+    "--from=markdown+tex_math_dollars+tex_math_single_backslash",
 ]
 
-def _get_input_output_paths(output_format: str = "pdf"):
-    os.makedirs("tmp", exist_ok=True)
-    input_filename = f"{str(uuid.uuid4())[:8]}"
-    md_path = os.path.join("tmp", "input_" + input_filename + ".md")
-    output_path = os.path.join("tmp", "output_" + input_filename + f".{output_format}")
-    return md_path, output_path
 
-# Convert from mardown content to pdf or docx
+def _get_paths(output_format: str = "pdf"):
+    os.makedirs("tmp", exist_ok=True)
+    name = str(uuid.uuid4())[:8]
+    return f"tmp/input_{name}.md", f"tmp/output_{name}.{output_format}"
+
+
+def _file_response(output_path: str, output_format: str, background_tasks: BackgroundTasks) -> FileResponse:
+    media_type = (
+        "application/pdf"
+        if output_format == "pdf"
+        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    background_tasks.add_task(os.remove, output_path)
+    return FileResponse(output_path, media_type=media_type, filename=f"output.{output_format}")
+
+
 @app.post("/convert_text")
-async def convert(request: Request, type: str = "pdf", background_tasks: BackgroundTasks = None): 
-    content = await request.body()
-    content = content.decode("utf-8")
+async def convert_text(request: Request, type: str = "pdf", background_tasks: BackgroundTasks = None):
+    content = (await request.body()).decode("utf-8")
     if not content.strip():
         raise HTTPException(status_code=400, detail="No content provided")
 
     output_format = "pdf" if type == "pdf" else "docx"
-    md_path, output_path = _get_input_output_paths(output_format)
+    md_path, output_path = _get_paths(output_format)
 
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(content)
-    try:
-        pypandoc.convert_file(
-            md_path,
-            output_format,
-            outputfile=output_path,
-            extra_args=PANDOC_ARGS,
-        )
-        background_tasks.add_task(os.remove, md_path)
-        background_tasks.add_task(os.remove, output_path)
 
+    try:
+        pypandoc.convert_file(md_path, output_format, outputfile=output_path, extra_args=PANDOC_ARGS)
     except RuntimeError as e:
-        print(f"Conversion error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
-    
+        raise HTTPException(status_code=500, detail=f"Conversion failed: {e}")
     finally:
         if os.path.exists(md_path):
-            os.remove(md_path)
-        if os.path.exists(output_path):
-            os.remove(output_path)
-    
+            os.remove(md_path)  # input cleaned up immediately
 
-    return FileResponse(
-        output_path,
-        media_type="application/pdf" if output_format == "pdf" else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        filename=f"output.{output_format}",
-    )
+    return _file_response(output_path, output_format, background_tasks)
+
 
 @app.post("/convert")
-async def convert_md_to_pdf(file: UploadFile = File(...), type: str = "pdf", background_tasks: BackgroundTasks = None):
+async def convert(file: UploadFile = File(...), type: str = "pdf", background_tasks: BackgroundTasks = None):
     content = await file.read()
-    
+
     output_format = "pdf" if type == "pdf" else "docx"
-    md_path, output_path = _get_input_output_paths(output_format)
+    md_path, output_path = _get_paths(output_format)
 
     with open(md_path, "wb") as f:
         f.write(content)
+
     try:
-        pypandoc.convert_file(
-            md_path,
-            output_format,
-            outputfile=output_path,
-            extra_args=PANDOC_ARGS,
-        )
-        background_tasks.add_task(os.remove, md_path)
-        background_tasks.add_task(os.remove, output_path)
+        pypandoc.convert_file(md_path, output_format, outputfile=output_path, extra_args=PANDOC_ARGS)
     except RuntimeError as e:
-        print(f"Conversion error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Conversion failed.")
+        raise HTTPException(status_code=500, detail=f"Conversion failed: {e}")
     finally:
         if os.path.exists(md_path):
             os.remove(md_path)
-        if os.path.exists(output_path):
-            os.remove(output_path)
 
-    return FileResponse(
-        output_path,
-        media_type="application/pdf" if output_format == "pdf" else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        filename=f"output.{output_format}",
-    )
+    return _file_response(output_path, output_format, background_tasks)
+
 
 @app.get("/health")
 def health():
