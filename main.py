@@ -50,6 +50,7 @@ async def convert_text(request: Request, type: str = "pdf", background_tasks: Ba
     try:
         pypandoc.convert_file(md_path, output_format, outputfile=output_path, extra_args=PANDOC_ARGS)
     except RuntimeError as e:
+        print(f"Conversion failed: {e}")
         raise HTTPException(status_code=500, detail=f"Conversion failed: {e}")
     finally:
         if os.path.exists(md_path):
@@ -71,6 +72,7 @@ async def convert(file: UploadFile = File(...), type: str = "pdf", background_ta
     try:
         pypandoc.convert_file(md_path, output_format, outputfile=output_path, extra_args=PANDOC_ARGS)
     except RuntimeError as e:
+        print(f"Conversion failed: {e}")
         raise HTTPException(status_code=500, detail=f"Conversion failed: {e}")
     finally:
         if os.path.exists(md_path):
