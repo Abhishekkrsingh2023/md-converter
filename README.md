@@ -1,7 +1,6 @@
-# md → export
 
 <div align="center">
-
+# md → export
 ### A minimal self-hosted Markdown → PDF / DOCX converter
 
 Convert raw Markdown or `.md` files into **PDF** and **DOCX** using **FastAPI**, **Pandoc**, and **XeLaTeX** — all packaged in a **single Docker container**.
@@ -92,8 +91,8 @@ It provides:
 
 | Layer                   | Technology                    |
 | ----------------------- | ----------------------------- |
-| **Backend**             | Python 3.12, FastAPI, Uvicorn |
-| **Document conversion** | Pandoc                        |
+| **Backend**             | Python 3.13, FastAPI, Uvicorn |
+| **Document conversion** | pypandoc                        |
 | **PDF engine**          | XeLaTeX (`texlive-xetex`)     |
 | **Frontend**            | Vanilla HTML / CSS / JS       |
 | **Packaging**           | Docker                        |
@@ -306,7 +305,8 @@ That makes deployment straightforward for:
 * Add a document conversion backend to another application
 
 ---
-
+<div align="center">
 ## 📄 License
 
 MIT © 2026 [Abhishek](https://github.com/Abhishekkrsingh2023)
+</div>
