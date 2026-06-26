@@ -7,7 +7,7 @@
 Convert raw Markdown or `.md` files into **PDF** and **DOCX** using **FastAPI**, **Pandoc**, and **XeLaTeX** — all packaged in a **single Docker container**.
 
 <p>
-  <img src="https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python" alt="Python">
+  <img src="https://img.shields.io/badge/Python-3.13-blue?style=for-the-badge&logo=python" alt="Python">
   <img src="https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi" alt="FastAPI">
   <img src="https://img.shields.io/badge/Pandoc-enabled-6f42c1?style=for-the-badge" alt="Pandoc">
   <img src="https://img.shields.io/badge/XeLaTeX-ready-orange?style=for-the-badge" alt="XeLaTeX">

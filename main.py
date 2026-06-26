@@ -1,6 +1,7 @@
 import os
 import uuid
 import pypandoc
+import aiofiles
 
 from fastapi import FastAPI, UploadFile, File, Request, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
@@ -44,8 +45,8 @@ async def convert_text(request: Request, type: str = "pdf", background_tasks: Ba
     output_format = "pdf" if type == "pdf" else "docx"
     md_path, output_path = _get_paths(output_format)
 
-    with open(md_path, "w", encoding="utf-8") as f:
-        f.write(content)
+    async with aiofiles.open(md_path, "w", encoding="utf-8") as f:
+        await f.write(content)
 
     try:
         pypandoc.convert_file(md_path, output_format, outputfile=output_path, extra_args=PANDOC_ARGS)
@@ -66,8 +67,8 @@ async def convert(file: UploadFile = File(...), type: str = "pdf", background_ta
     output_format = "pdf" if type == "pdf" else "docx"
     md_path, output_path = _get_paths(output_format)
 
-    with open(md_path, "wb") as f:
-        f.write(content)
+    async with aiofiles.open(md_path, "wb") as f:
+        await f.write(content)
 
     try:
         pypandoc.convert_file(md_path, output_format, outputfile=output_path, extra_args=PANDOC_ARGS)
