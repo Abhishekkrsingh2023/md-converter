@@ -402,6 +402,43 @@
       color: var(--text-dim);
     }
 
+    /* ── Filename input ── */
+    .filename-wrap {
+      margin-top: 18px;
+      position: relative;
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(4px);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+    }
+
+    .filename-wrap:focus-within {
+      border-color: rgba(124, 111, 255, 0.45);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.06) inset,
+        0 0 0 3px rgba(124, 111, 255, 0.14),
+        0 0 20px rgba(124, 111, 255, 0.08);
+    }
+
+    .filename-input {
+      display: block;
+      width: 100%;
+      padding: 11px 14px;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12.5px;
+      border: none;
+      outline: none;
+    }
+
+    .filename-input::placeholder {
+      color: var(--muted);
+    }
+
     /* ── Convert button ── */
     .convert-btn {
       margin-top: 18px;
@@ -614,6 +651,10 @@
           </div>
         </div>
 
+        <div class="filename-wrap">
+          <input type="text" class="filename-input" id="filename-text" placeholder="File name (optional, e.g. my-document)" />
+        </div>
+
         <button class="convert-btn" id="btn-text">
           <span class="btn-inner">
             <span class="spinner"></span>
@@ -639,6 +680,10 @@
             <button class="fmt-btn selected" data-fmt="pdf">PDF</button>
             <button class="fmt-btn" data-fmt="docx">DOCX</button>
           </div>
+        </div>
+
+        <div class="filename-wrap">
+          <input type="text" class="filename-input" id="filename-file" placeholder="File name (optional, defaults to uploaded file name)" />
         </div>
 
         <button class="convert-btn" id="btn-file" disabled>
@@ -730,12 +775,22 @@
       if (kind === "ok") setTimeout(() => el.classList.remove("show"), 3500);
     }
 
-    async function downloadBlob(response, fmt) {
+    function sanitizeFilename(name) {
+      return name
+        .trim()
+        .replace(/\.[^/.]+$/, "")        // strip any existing extension
+        .replace(/[\\/:*?"<>|]/g, "-")   // strip characters invalid on most filesystems
+        .replace(/\s+/g, "-")
+        .slice(0, 120);
+    }
+
+    async function downloadBlob(response, fmt, desiredName) {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "output." + fmt;
+      const base = desiredName && desiredName.length ? desiredName : "output";
+      a.download = base + "." + fmt;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -748,6 +803,7 @@
       const status = document.getElementById("status-text");
       const btn = document.getElementById("btn-text");
       const fmt = selectedFmt.text;
+      const desiredName = sanitizeFilename(document.getElementById("filename-text").value || "");
 
       if (!content) { showStatus(status, "Paste some Markdown first.", "err"); return; }
 
@@ -766,8 +822,8 @@
           throw new Error(err.detail || "Conversion failed");
         }
 
-        await downloadBlob(res, fmt);
-        showStatus(status, `✓ Downloaded output.${fmt}`, "ok");
+        await downloadBlob(res, fmt, desiredName);
+        showStatus(status, `✓ Downloaded ${desiredName || "output"}.${fmt}`, "ok");
       } catch (e) {
         showStatus(status, "✗ " + e.message, "err");
       } finally {
@@ -780,6 +836,9 @@
       const status = document.getElementById("status-file");
       const btn = document.getElementById("btn-file");
       const fmt = selectedFmt.file;
+      const typedName = sanitizeFilename(document.getElementById("filename-file").value || "");
+      const fallbackName = uploadedFile ? sanitizeFilename(uploadedFile.name) : "";
+      const desiredName = typedName || fallbackName;
 
       if (!uploadedFile) { showStatus(status, "Upload a .md file first.", "err"); return; }
 
@@ -800,8 +859,8 @@
           throw new Error(err.detail || "Conversion failed");
         }
 
-        await downloadBlob(res, fmt);
-        showStatus(status, `✓ Downloaded output.${fmt}`, "ok");
+        await downloadBlob(res, fmt, desiredName);
+        showStatus(status, `✓ Downloaded ${desiredName || "output"}.${fmt}`, "ok");
       } catch (e) {
         showStatus(status, "✗ " + e.message, "err");
       } finally {
